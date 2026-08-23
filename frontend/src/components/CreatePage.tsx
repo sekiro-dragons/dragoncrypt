@@ -123,7 +123,9 @@ export function CreatePage({ onNavigate }: Props) {
             const origin = window.location.origin;
             const keyParam = storedKey.key;
             const saltParam = storedKey.salt ? `&s=${storedKey.salt}` : '';
-            const url = `${origin}/#/view/${id}#k=${keyParam}${saltParam}`;
+            
+            // FIX: Using ?k= instead of #k= so the browser reads it flawlessly
+            const url = `${origin}/#/view/${id}?k=${keyParam}${saltParam}`;
 
             setCreated({ url, id });
         } catch (err) {
@@ -254,13 +256,16 @@ export function CreatePage({ onNavigate }: Props) {
                                 <QrCode className="w-4 h-4 text-amber-500" />
                                 {showQR ? 'Hide Crest' : 'Show Crest (QR)'}
                             </button>
+                            
+                            {/* FIX: This button now actually opens the correct URL instead of an empty key */}
                             <button
-                                onClick={() => onNavigate(`/view/${created.id}#k=`)}
+                                onClick={() => window.open(created.url, '_blank')}
                                 className="flex items-center gap-2 px-4 py-2 rounded bg-stone-900 border border-stone-700 text-stone-300 hover:text-amber-300 text-xs tracking-wider uppercase transition-colors"
                             >
                                 <Eye className="w-4 h-4 text-amber-500" />
                                 Open Link
                             </button>
+                            
                             <button
                                 onClick={handleReset}
                                 className="flex items-center gap-2 px-4 py-2 rounded bg-stone-900 border border-stone-700 text-stone-300 hover:text-amber-300 text-xs tracking-wider uppercase transition-colors"
