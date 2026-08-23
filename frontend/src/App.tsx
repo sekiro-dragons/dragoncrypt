@@ -7,17 +7,29 @@ type Route =
     | { name: 'home' }
     | { name: 'view'; id: string; fragment: string };
 
+// --- ROCK SOLID ROUTE PARSER ---
 function parseRoute(): Route {
     const hash = window.location.hash;
-    // Matches #/view/<id>#k=... or #/view/<id>?k=... (Fixes the decryption key parsing)
-    const viewMatch = hash.match(/^#\/view\/([^#?]+)(.*)?$/);
-    if (viewMatch) {
-        return {
-            name: 'view',
-            id: viewMatch[1],
-            fragment: viewMatch[2] || '',
-        };
+    
+    if (hash.startsWith('#/view/')) {
+        let id = '';
+        let fragment = '';
+        
+        if (hash.includes('#k=')) {
+            const parts = hash.split('#k=');
+            id = parts[0].replace('#/view/', '').replace(/\//g, '').trim();
+            fragment = 'k=' + (parts[1] || '');
+        } else if (hash.includes('?k=')) {
+            const parts = hash.split('?k=');
+            id = parts[0].replace('#/view/', '').replace(/\//g, '').trim();
+            fragment = 'k=' + (parts[1] || '');
+        } else {
+            id = hash.replace('#/view/', '').replace(/\//g, '').trim();
+        }
+
+        return { name: 'view', id, fragment };
     }
+    
     return { name: 'home' };
 }
 
