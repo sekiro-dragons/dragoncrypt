@@ -22,16 +22,29 @@ pub async fn get_secret(
     State(pool): State<SqlitePool>,
     Path(id): Path<String>,
 ) -> Result<Json<SecretRecord>, StatusCode> {
-    let record = db::get_secret(&pool, &id)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-        .ok_or(StatusCode::NOT_FOUND)?;
+    let mut tx = pool.begin().await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let record = sqlx::query_as::<_, SecretRecord>(
+        r#"
+        SELECT id, ciphertext, iv, salt, expires_at, burn_after_read, view_count,
+               max_views, is_file, file_name, file_size, file_mime, created_at
+        FROM secrets WHERE id = ?
+        "#,
+    )
+    .bind(&id)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+    .ok_or(StatusCode::NOT_FOUND)?;
 
     // Check expiry
     if let Some(ref expires_at) = record.expires_at {
         if let Ok(exp) = chrono::DateTime::parse_from_rfc3339(expires_at) {
             if exp < chrono::Utc::now() {
-                let _ = db::delete_secret(&pool, &id).await;
+                let _ = sqlx::query("DELETE FROM secrets WHERE id = ?")
+                    .bind(&id)
+                    .execute(&mut *tx)
+                    .await;
                 return Err(StatusCode::NOT_FOUND);
             }
         }
@@ -40,19 +53,31 @@ pub async fn get_secret(
     // Check max views
     if let Some(max) = record.max_views {
         if record.view_count >= max {
-            let _ = db::delete_secret(&pool, &id).await;
+            let _ = sqlx::query("DELETE FROM secrets WHERE id = ?")
+                .bind(&id)
+                .execute(&mut *tx)
+                .await;
             return Err(StatusCode::NOT_FOUND);
         }
     }
 
     // Increment view count
-    let _ = db::increment_view(&pool, &id).await;
+    sqlx::query("UPDATE secrets SET view_count = view_count + 1 WHERE id = ?")
+        .bind(&id)
+        .execute(&mut *tx)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     // Burn after read
     if record.burn_after_read {
-        let _ = db::delete_secret(&pool, &id).await;
+        sqlx::query("DELETE FROM secrets WHERE id = ?")
+            .bind(&id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     }
 
+    tx.commit().await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(record))
 }
 

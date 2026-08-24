@@ -93,29 +93,6 @@ pub async fn create_secret(pool: &SqlitePool, input: CreateSecretInput) -> Resul
     Ok(id)
 }
 
-pub async fn get_secret(pool: &SqlitePool, id: &str) -> Result<Option<SecretRecord>, sqlx::Error> {
-    let row: Option<SecretRecord> = sqlx::query_as(
-        r#"
-        SELECT id, ciphertext, iv, salt, expires_at, burn_after_read, view_count,
-               max_views, is_file, file_name, file_size, file_mime, created_at
-        FROM secrets WHERE id = ?
-        "#,
-    )
-    .bind(id)
-    .fetch_optional(pool)
-    .await?;
-
-    Ok(row)
-}
-
-pub async fn increment_view(pool: &SqlitePool, id: &str) -> Result<(), sqlx::Error> {
-    sqlx::query("UPDATE secrets SET view_count = view_count + 1 WHERE id = ?")
-        .bind(id)
-        .execute(pool)
-        .await?;
-    Ok(())
-}
-
 pub async fn delete_secret(pool: &SqlitePool, id: &str) -> Result<(), sqlx::Error> {
     sqlx::query("DELETE FROM secrets WHERE id = ?")
         .bind(id)

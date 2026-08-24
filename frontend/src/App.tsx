@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { Shield, Plus, Flame, Scroll, Volume2, VolumeX } from 'lucide-react';
 import { CreatePage } from '@/components/CreatePage';
-import { ViewPage } from '@/components/ViewPage';
+const ViewPage = lazy(() =>
+    import('@/components/ViewPage').then((m) => ({ default: m.ViewPage }))
+);
 
 type Route =
     | { name: 'home' }
@@ -76,7 +78,7 @@ export default function App() {
             </div>
 
             {/* Background Audio Player */}
-            <audio ref={audioRef} src="/sekiro-theme.mp3" loop />
+            <audio ref={audioRef} src="/sekiro-theme.mp3" loop preload="none" />
             
             {/* Floating Audio Toggle */}
             <button
@@ -142,11 +144,13 @@ export default function App() {
             <main className="relative z-10 flex-1 flex flex-col">
                 {route.name === 'home' && <HomePage onNavigate={navigate} />}
                 {route.name === 'view' && (
-                    <ViewPage
-                        id={route.id}
-                        fragment={route.fragment}
-                        onNavigate={navigate}
-                    />
+                    <Suspense fallback={null}>
+                        <ViewPage
+                            id={route.id}
+                            fragment={route.fragment}
+                            onNavigate={navigate}
+                        />
+                    </Suspense>
                 )}
             </main>
 

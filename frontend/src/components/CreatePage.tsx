@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import {
     Clock,
     Flame,
@@ -24,7 +24,10 @@ import {
     EXPIRY_LABELS,
 } from '@/lib/secrets';
 import { generateQR } from '@/lib/qr';
-import { SecurityModal } from './SecurityModal';
+
+const SecurityModal = lazy(() =>
+    import('./SecurityModal').then((m) => ({ default: m.SecurityModal }))
+);
 
 type Props = {
     onNavigate: (path: string) => void;
@@ -461,7 +464,11 @@ export function CreatePage({ onNavigate }: Props) {
                 </div>
             </div>
 
-            <SecurityModal open={showSecurity} onClose={() => setShowSecurity(false)} />
+            {showSecurity && (
+                <Suspense fallback={null}>
+                    <SecurityModal open={showSecurity} onClose={() => setShowSecurity(false)} />
+                </Suspense>
+            )}
         </div>
     );
 }
