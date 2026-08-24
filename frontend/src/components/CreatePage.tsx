@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import {
     Clock,
     Flame,
-    KeyRound,
     Upload,
     Loader2,
     Check,
@@ -29,16 +28,12 @@ const SecurityModal = lazy(() =>
     import('./SecurityModal').then((m) => ({ default: m.SecurityModal }))
 );
 
-type Props = {
-    onNavigate: (path: string) => void;
-};
-
 type CreatedLink = {
     url: string;
     id: string;
 };
 
-export function CreatePage({ onNavigate }: Props) {
+export function CreatePage() {
     const [content, setContent] = useState('');
     const [expiry, setExpiry] = useState<ExpiryChoice>('1d');
     const [burnAfterRead, setBurnAfterRead] = useState(true);
@@ -82,7 +77,7 @@ export function CreatePage({ onNavigate }: Props) {
             const slashSound = new Audio('/slice.mp3');
             slashSound.volume = 0.7;
             slashSound.play();
-        } catch (e) {
+        } catch {
             // Ignore if browser blocks auto-play audio
         }
         // -------------------------------------
@@ -143,7 +138,7 @@ export function CreatePage({ onNavigate }: Props) {
         try {
             // Attempt manual deletion on the server to act as a kill switch
             await fetch(`/api/secrets/${created.id}`, { method: 'DELETE' });
-        } catch (e) {
+        } catch {
             // Fails silently if API isn't built yet, but UI still updates for the demo
         }
         setIsRevoked(true);

@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import {
     Loader2,
-    Eye,
-    KeyRound,
     Download,
     Clock,
     Flame,

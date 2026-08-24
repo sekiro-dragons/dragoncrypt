@@ -142,7 +142,7 @@ export default function App() {
 
             {/* Main Section */}
             <main className="relative z-10 flex-1 flex flex-col">
-                {route.name === 'home' && <HomePage onNavigate={navigate} />}
+                {route.name === 'home' && <HomePage />}
                 {route.name === 'view' && (
                     <Suspense fallback={null}>
                         <ViewPage
@@ -174,7 +174,7 @@ export default function App() {
     );
 }
 
-function HomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
+function HomePage() {
     return (
         <div className="flex-1 flex flex-col">
             {/* Hero */}
@@ -208,7 +208,7 @@ function HomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
 
             {/* Form Section */}
             <section id="create-section" className="px-6 pb-20 scroll-mt-20">
-                <CreatePage onNavigate={onNavigate} />
+                <CreatePage />
             </section>
         </div>
     );
